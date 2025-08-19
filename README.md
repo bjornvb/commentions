@@ -57,10 +57,27 @@ There are a couple of ways to use Commentions with Filament.
 > This works for Filament 3 and 4.
 
 ```php
-Infolists\Components\Section::make('Comments')
+    CommentsEntry::make('comments')
+        ->mentionables(fn (Model $record) => User::all()),
+```
+
+If you wish to make the comments more distinct from the rest of the page, we recommend wrapping them in a `Section`.
+
+For Filament 3:
+
+```php
+\Filament\Infolists\Components\Section::make('Comments')
     ->schema([
-        CommentsEntry::make('comments')
-            ->mentionables(fn (Model $record) => User::all()),
+        CommentsEntry::make('comments'),
+    ]),
+```
+
+For Filament 4:
+
+```php
+\Filament\Schemas\Components\Section::make('Comments')
+    ->components([
+        CommentsEntry::make('comments'),
     ]),
 ```
 
@@ -112,6 +129,59 @@ You can publish the configuration file to make changes.
 ```bash
 php artisan vendor:publish --tag="commentions-config"
 ```
+
+#### Pagination (Filament)
+
+Commentions supports built-in pagination for the embedded list of comments and it is enabled by default. You can disable it or control the number of comments shown per page and per click.
+
+- Enabled by default
+- Disable via `disablePagination()`
+- Configure page size
+- Customize the load more label
+- Control how many comments are appended per click (defaults to the page size)
+
+Examples:
+
+Default Usage:
+
+```php
+use Kirschbaum\Commentions\Filament\Actions\CommentsAction;
+
+->recordActions([
+    CommentsAction::make()
+        ->mentionables(User::all())
+        ->perPage(10)
+        
+])
+```
+Without Pagination:
+
+```php
+use Kirschbaum\Commentions\Filament\Actions\CommentsAction;
+
+->recordActions([
+    CommentsAction::make()
+        ->mentionables(User::all())
+        ->disablePagination();
+        
+])
+```
+Advanced Usage:
+
+```php
+use Kirschbaum\Commentions\Filament\Infolists\Components\CommentsEntry;
+
+Infolists\Components\Section::make('Comments')
+    ->schema([
+        CommentsEntry::make('comments')
+            ->mentionables(fn (Model $record) => User::all())
+            ->perPage(8)
+            ->loadMoreIncrementsBy(8)
+            ->loadMoreLabel('Show older'),
+    ])
+```
+
+When pagination is enabled, a "Show more" button is displayed to load additional comments incrementally.
 
 #### Configuring the User model and the mentionables
 
@@ -220,6 +290,34 @@ class User extends Authenticatable implements Commenter, HasName, HasAvatar
         return $this->avatar_url;
     }
 }
+```
+
+### Translations
+
+You can publish the package translation files and override any strings used by the UI.
+
+Publish the language files into your application:
+
+```bash
+php artisan vendor:publish --tag="commentions-lang"
+``
+
+This will copy the language files to:
+
+- `lang/vendor/commentions/{locale}/comments.php`
+
+Override only the keys you need. Example (English):
+
+```php
+// lang/vendor/commentions/en/comments.php
+return [
+    'label' => 'Notes',
+    'no_comments_yet' => 'No notes yet.',
+    'add_reaction' => 'Add a reaction',
+    'cancel' => 'Close',
+    'delete' => 'Remove',
+    'save' => 'Update',
+];
 ```
 
 ### Events

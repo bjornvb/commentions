@@ -17,14 +17,14 @@
                     <x-filament::button
                         wire:click="save"
                         size="sm"
-                    >Comment</x-filament::button>
+                    >{{ __('commentions::comments.comment') }}</x-filament::button>
 
                     <x-filament::button
                         x-on:click="wasFocused = false"
                         wire:click="clear"
                         size="sm"
                         color="gray"
-                    >Cancel</x-filament::button>
+                    >{{ __('commentions::comments.cancel') }}</x-filament::button>
                 </div>
             </template>
         </form>
@@ -34,5 +34,9 @@
         :record="$record"
         :mentionables="$this->mentions"
         :polling-interval="$pollingInterval"
+        :paginate="$paginate ?? true"
+        :per-page="$perPage ?? 5"
+        :load-more-label="$loadMoreLabel ?? 'Show more'"
+        :per-page-increment="$perPageIncrement ?? null"
     />
 </div>

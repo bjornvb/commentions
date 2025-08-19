@@ -8,7 +8,7 @@
                 />
 
                 <span class="comm:text-sm comm:font-medium comm:text-gray-500 comm:dark:text-gray-400">
-                    No comments yet.
+                    {{ __('commentions::comments.no_comments_yet') }}
                 </span>
             </div>
         </div>
@@ -21,4 +21,16 @@
             :mentionables="$mentionables"
         />
     @endforeach
+
+    @if ($this->hasMore)
+        <div class="comm:mt-2">
+            <x-filament::button
+                color="gray"
+                size="sm"
+                wire:click="loadMore"
+                wire:target="loadMore"
+                wire:loading.attr="disabled"
+            >{{ $loadMoreLabel }}</x-filament::button>
+        </div>
+    @endif
 </div>
