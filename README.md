@@ -103,7 +103,7 @@ use Kirschbaum\Commentions\Filament\Actions\CommentsAction;
     CommentsAction::make()
         ->mentionables(User::all())
 ])
-````
+```
 
 3. Or as a header action:
 
@@ -118,6 +118,100 @@ protected function getHeaderActions(): array
         CommentsAction::make(),
     ];
 }
+```
+
+### Subscription Management
+
+Commentions includes a subscription system that allows users to subscribe to receive notifications when new comments are added to a commentable resource.
+
+#### Subscription Actions
+
+You can add subscription actions to your Filament resources:
+
+```php
+use Kirschbaum\Commentions\Filament\Actions\SubscriptionAction;
+
+// In header actions
+protected function getHeaderActions(): array
+{
+    return [
+        SubscriptionAction::make(),
+    ];
+}
+
+// In table actions (Filament 3)
+->actions([
+    SubscriptionTableAction::make(),
+])
+
+// In record actions (Filament 4)
+->recordActions([
+    SubscriptionAction::make(),
+])
+```
+
+#### Subscription Sidebar
+
+When using comments in modals, a subscription sidebar is automatically displayed showing:
+- Subscribe/unsubscribe button for the current user
+- List of users currently subscribed to the commentable
+- Real-time updates when subscription status changes
+
+##### Livewire options
+
+When using the `commentions::comments` Livewire component directly, you can control the sidebar and its contents via component properties:
+
+- `sidebarEnabled` (bool, default: true): toggles the entire subscription sidebar
+- `showSubscribers` (bool, default: `config('commentions.subscriptions.show_subscribers', true)`): toggles the subscribers list within the sidebar
+
+Examples:
+
+```php
+// Hide the sidebar entirely
+<livewire:commentions::comments :record="$record" :sidebar-enabled="false" />
+
+// Keep the sidebar, but hide the subscribers list (uses config default if omitted)
+<livewire:commentions::comments :record="$record" :show-subscribers="false" />
+```
+
+Inside the component/template you can also rely on these computed properties:
+
+- `canSubscribe`: whether the current user can subscribe
+- `isSubscribed`: whether the current user is subscribed to the current record
+- `subscribers`: a collection of current subscribers
+
+The component exposes a `toggleSubscription()` action which subscribes/unsubscribes the current user.
+
+#### Disabling the Subscription Sidebar
+
+You can disable the subscription sidebar if you don't want subscription functionality:
+
+```php
+use Kirschbaum\Commentions\Filament\Actions\CommentsAction;
+
+->recordActions([
+    CommentsAction::make()
+        ->mentionables(User::all())
+        ->disableSidebar()
+])
+```
+
+#### Subscription Methods
+
+The `HasComments` trait provides methods for managing subscriptions programmatically:
+
+```php
+// Subscribe a user
+$commentable->subscribe($user);
+
+// Unsubscribe a user
+$commentable->unsubscribe($user);
+
+// Check if a user is subscribed
+$isSubscribed = $commentable->isSubscribed($user);
+
+// Get all subscribers
+$subscribers = $commentable->getSubscribers();
 ```
 
 ***
@@ -322,15 +416,41 @@ return [
 
 ### Events
 
-Two events are dispatched when a comment is created or reacted to:
+Events are dispatched when a comment is created, reacted to, or when users are mentioned or subscribed:
 
 - `Kirschbaum\Commentions\Events\UserWasMentionedEvent`
+- `Kirschbaum\Commentions\Events\UserIsSubscribedToCommentableEvent`
 - `Kirschbaum\Commentions\Events\CommentWasCreatedEvent`
 - `Kirschbaum\Commentions\Events\CommentWasReactedEvent`
 
+#### Subscription Events
+
+When a new comment is created, all subscribed users receive notifications through the `UserIsSubscribedToCommentableEvent`. You can listen to this event to send custom notifications:
+
+```php
+namespace App\Listeners;
+
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Notifications\NewCommentNotification;
+use Kirschbaum\Commentions\Events\UserIsSubscribedToCommentableEvent;
+
+class SendSubscribedUserNotification implements ShouldQueue
+{
+    use InteractsWithQueue;
+
+    public function handle(UserIsSubscribedToCommentableEvent $event): void
+    {
+        $event->user->notify(
+            new NewCommentNotification($event->comment)
+        );
+    }
+}
+```
+
 ### Sending notifications when a user is mentioned
 
-Every time a user is mentioned, the `Kirschbaum\Commentions\Events\UserWasMentionedEvent` is dispatched. You can listen to this event and send notifications to the mentioned user.
+Every time a user is mentioned, the `Kirschbaum\Commentions\Events\UserWasMentionedEvent` is dispatched. Commentions ships an optional, opt-in notification you can enable via configuration, or you can listen to the event and handle it yourself.
 
 Example usage:
 
@@ -356,6 +476,30 @@ class SendUserMentionedNotification implements ShouldQueue
 ```
 
 If you have [event auto-discovery](https://laravel.com/docs/11.x/events#registering-events-and-listeners), this should be enough. Otherwise, make sure to register your listener on the `EventServiceProvider`.
+
+#### Built-in opt-in notifications
+
+Enable notifications for mentions in your `config/commentions.php`:
+
+```php
+    'notifications' => [
+        'mentions' => [
+            'enabled' => true,
+            'channels' => ['mail', 'database'],
+        ],
+    ],
+```
+
+Optionally, provide a URL resolver so emails/links point users to the right place:
+
+```php
+use Kirschbaum\Commentions\Config;
+
+Config::resolveCommentUrlUsing(function (\Kirschbaum\Commentions\Comment $comment) {
+    // Return a URL to view the record and scroll to the comment
+    return route('projects.show', $comment->commentable) . '#comment-' . $comment->getId();
+});
+```
 
 ### Resolving the authenticated user
 

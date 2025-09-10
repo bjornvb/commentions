@@ -5,12 +5,16 @@ namespace Kirschbaum\Commentions;
 use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Kirschbaum\Commentions\Comment as CommentModel;
+use Kirschbaum\Commentions\Events\UserWasMentionedEvent;
+use Kirschbaum\Commentions\Listeners\SendUserMentionedNotification;
 use Kirschbaum\Commentions\Livewire\Comment;
 use Kirschbaum\Commentions\Livewire\CommentList;
 use Kirschbaum\Commentions\Livewire\Comments;
 use Kirschbaum\Commentions\Livewire\Reactions;
+use Kirschbaum\Commentions\Livewire\SubscriptionSidebar;
 use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -34,6 +38,7 @@ class CommentionsServiceProvider extends PackageServiceProvider
             ->hasMigrations([
                 'create_commentions_tables',
                 'create_commentions_reactions_table',
+                'create_commentions_subscriptions_table',
             ]);
     }
 
@@ -43,6 +48,7 @@ class CommentionsServiceProvider extends PackageServiceProvider
         Livewire::component('commentions::comment-list', CommentList::class);
         Livewire::component('commentions::comments', Comments::class);
         Livewire::component('commentions::reactions', Reactions::class);
+        Livewire::component('commentions::subscription-sidebar', SubscriptionSidebar::class);
 
         FilamentAsset::register(
             [
@@ -64,5 +70,10 @@ class CommentionsServiceProvider extends PackageServiceProvider
         $this->publishes([
             __DIR__ . '/../resources/lang' => resource_path('lang/vendor/commentions'),
         ], 'commentions-lang');
+
+        if (config('commentions.notifications.mentions.enabled', false)) {
+            $listenerClass = (string) config('commentions.notifications.mentions.listener', SendUserMentionedNotification::class);
+            Event::listen(UserWasMentionedEvent::class, $listenerClass);
+        }
     }
 }
