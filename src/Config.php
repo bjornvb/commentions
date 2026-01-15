@@ -14,6 +14,8 @@ class Config
 
     protected static ?Closure $resolveCommentUrl = null;
 
+    protected static ?Closure $resolveTipTapCssClasses = null;
+
     public static function resolveAuthenticatedUserUsing(Closure $callback): void
     {
         static::$resolveAuthenticatedUser = $callback;
@@ -39,6 +41,11 @@ class Config
     public static function getCommentReactionTable(): string
     {
         return config('commentions.tables.comment_reactions', 'comment_reactions');
+    }
+
+    public static function getCommentSubscriptionTable(): string
+    {
+        return config('commentions.tables.comment_subscriptions', 'comment_subscriptions');
     }
 
     public static function resolveCommentUrlUsing(Closure $callback): void
@@ -72,5 +79,19 @@ class Config
     public static function getAllowedReactions(): array
     {
         return config('commentions.reactions.allowed', ['👍']);
+    }
+
+    public static function resolveTipTapCssClassesUsing(Closure $callback): void
+    {
+        static::$resolveTipTapCssClasses = $callback;
+    }
+
+    public static function getTipTapCssClasses(): ?string
+    {
+        if (static::$resolveTipTapCssClasses instanceof Closure) {
+            return call_user_func(static::$resolveTipTapCssClasses);
+        }
+
+        return 'comm:prose comm:dark:prose-invert comm:prose-sm comm:sm:prose-base comm:lg:prose-lg comm:xl:prose-2xl comm:focus:outline-none comm:p-4 comm:min-w-full comm:w-full comm:rounded-lg comm:border comm:border-gray-300 comm:dark:border-gray-700';
     }
 }

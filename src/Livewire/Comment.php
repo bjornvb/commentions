@@ -22,6 +22,8 @@ class Comment extends Component
 
     public bool $editing = false;
 
+    public ?string $tipTapCssClasses = null;
+
     protected $rules = [
         'commentBody' => 'required|string',
     ];
@@ -48,7 +50,7 @@ class Comment extends Component
         $this->dispatch('comment:deleted');
 
         Notification::make()
-            ->title('Comment deleted')
+            ->title(__('commentions::comments.notification_comment_deleted'))
             ->success()
             ->send();
     }
@@ -114,5 +116,10 @@ class Comment extends Component
         $this->comment->toggleReaction($reaction);
 
         $this->dispatch('comment:reaction:saved');
+    }
+
+    public function getTipTapCssClasses(): ?string
+    {
+        return $this->tipTapCssClasses ?? Config::getTipTapCssClasses();
     }
 }

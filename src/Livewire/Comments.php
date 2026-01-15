@@ -24,6 +24,8 @@ class Comments extends Component
 
     public string $commentBody = '';
 
+    public ?string $tipTapCssClasses = null;
+
     protected $rules = [
         'commentBody' => 'required|string',
     ];
@@ -61,5 +63,15 @@ class Comments extends Component
         $this->commentBody = '';
 
         $this->dispatch('comments:content:cleared');
+    }
+
+    public function getPlaceholder(): string
+    {
+        return __('commentions::comments.placeholder');
+    }
+
+    public function getTipTapCssClasses(): ?string
+    {
+        return $this->tipTapCssClasses ?? Config::getTipTapCssClasses();
     }
 }

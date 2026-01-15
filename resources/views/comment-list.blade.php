@@ -19,6 +19,7 @@
             :key="$comment->getContentHash()"
             :comment="$comment"
             :mentionables="$mentionables"
+            :tip-tap-css-classes="$tipTapCssClasses"
         />
     @endforeach
 
@@ -30,7 +31,7 @@
                 wire:click="loadMore"
                 wire:target="loadMore"
                 wire:loading.attr="disabled"
-            >{{ $loadMoreLabel }}</x-filament::button>
+            >{{ $this->getLoadMoreLabel() }}</x-filament::button>
         </div>
     @endif
 </div>

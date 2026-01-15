@@ -8,7 +8,7 @@
                 {{-- tiptap editor --}}
                 <div class="comm:relative tip-tap-container comm:mb-2" x-on:click="wasFocused = true" wire:ignore>
                     <div
-                        x-data="editor(@js($commentBody), @js($this->mentions), 'comments')"
+                        x-data="editor(@js($commentBody), @js($this->mentions), 'comments', @js($this->getPlaceholder()), @js($this->getTipTapCssClasses()))"
                     >
                         <div x-ref="element"></div>
                     </div>
@@ -38,8 +38,9 @@
             :polling-interval="$pollingInterval"
             :paginate="$paginate ?? true"
             :per-page="$perPage ?? 5"
-            :load-more-label="$loadMoreLabel ?? 'Show more'"
+            :load-more-label="$loadMoreLabel ?? __('commentions::comments.show_more')"
             :per-page-increment="$perPageIncrement ?? null"
+            :tip-tap-css-classes="$tipTapCssClasses"
         />
     </div>
 
